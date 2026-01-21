@@ -1,63 +1,164 @@
+Parfait 👍
+Voici **TOUT le contenu du README**, **clé en main**.
+👉 Tu **copies–colles exactement** ceci dans `README.md`.
+👉 **Tu ne modifies rien** si tu ne veux pas.
+
+---
+
+````markdown
 # Sequencing Run Processing Pipeline (Prototype)
 
-This project implements a simplified, robust command-line tool to process sequencing runs and FASTQ samples.
-It focuses on structure, error handling, and traceability (not performance).
+## Kontext und Ziel
+Dieses Projekt wurde im Rahmen einer technischen Aufgabe für die Position  
+**Junior Bioinformatiker / Data Scientist** entwickelt.
 
-## Requirements
-- Python 3.x
-- Linux-compatible
-- Git
+Ziel dieser Aufgabe ist die Konzeption und Implementierung einer einfachen,
+aber robusten Verarbeitungskomponente für Sequenzierläufe mit Fokus auf:
 
-## Usage
+- saubere und nachvollziehbare Code-Struktur  
+- robuste Fehlerbehandlung  
+- klare Statusberichterstattung  
+- gute Wartbarkeit und Erweiterbarkeit  
 
-### Step 1: Scan runs and write an overview (current)
+Der Schwerpunkt liegt nicht auf biologischer Komplexität, sondern auf
+Software-Engineering-Prinzipien, wie sie in bioinformatischen Pipelines
+im Produktionsumfeld angewendet werden.
+
+---
+
+## Grundlegender Ansatz
+Die Pipeline verarbeitet Sequenzierdaten in einer klaren Hierarchie:
+
+- Das **Input-Verzeichnis** enthält mehrere Sequenzierläufe (Runs)
+- Jeder **Run** besteht aus mehreren FASTQ-Dateien (Samples)
+- Jedes Sample wird **unabhängig** verarbeitet
+- Fehler auf Sample-Ebene stoppen **nicht** den gesamten Run
+
+Durch diesen Ansatz ist die Pipeline robust gegenüber fehlerhaften oder
+inkompletten Eingabedaten und kann auch **Teilergebnisse** korrekt verarbeiten.
+Runs können daher den Status **SUCCESS**, **FAILED** oder **PARTIAL** annehmen.
+
+---
+
+## Projektstruktur
+Der Code ist modular aufgebaut, um Verantwortlichkeiten klar zu trennen:
+
+- `main.py`  
+  Einstiegspunkt der Anwendung.  
+  Verarbeitet Kommandozeilenargumente, initialisiert das Logging und steuert
+  den gesamten Ablauf der Pipeline.
+
+- `processor/run_scanner.py`  
+  Erkennt Sequenzierläufe und FASTQ-Dateien im Input-Verzeichnis.
+
+- `processor/fastq_utils.py`  
+  Liest FASTQ-Dateien und berechnet einfache technische Metriken
+  (z. B. Anzahl der Reads, durchschnittliche Read-Länge).
+
+- `processor/sample_processor.py`  
+  Verarbeitet einzelne FASTQ-Samples und kapselt die Sample-spezifische
+  Fehlerbehandlung.
+
+- `processor/output_writer.py`  
+  Aggregiert die Ergebnisse auf Run-Ebene und erzeugt strukturierte
+  JSON-Ausgabedateien.
+
+- `processor/logging_utils.py`  
+  Konfiguriert das Logging für Konsolenausgabe und Logdateien.
+
+---
+
+## Ausführung der Pipeline
+
 ```bash
-python main.py --input input --outdir output
+python main.py --input input --outdir output --log logs/pipeline.log
+````
 
-##
-- `output/status_overview.json` (run-level overview; includes `num_samples` = number of FASTQ files per run)
+### Annahmen zum Input
 
+* `--input` enthält ein Verzeichnis pro Sequenzierlauf (z. B. `20251212_run001`)
+* FASTQ-Dateien können sich in Unterverzeichnissen befinden (rekursive Suche)
+* Unterstützte Dateiformate:
 
-## What the tool does
-- Iterates over run directories inside `--input`
-- Processes each FASTQ file (sample) independently
-- Computes per-sample metrics:
-  - `num_reads`
-  - `avg_read_length`
-- Determines run status:
-  - SUCCESS (all samples ok)
-  - FAILED (all samples failed)
-  - PARTIAL (mix of success and failure)
+  * `.fastq`
+  * `.fq`
+  * `.fastq.gz`
+  * `.fq.gz`
+* Technische Verzeichnisse (z. B. `output`, `logs`, `processor`) werden
+  bei der Run-Erkennung ignoriert
 
-## Outputs
-- `output/status_overview.json`:
-  - run_id, num_samples, run_status, failed_samples
-- `output/status_detailed.json`:
-  - per-run list of samples with metrics or error message
+---
 
-## Error handling
-- Sample-level failures do not stop run processing
-- Errors are logged with run_id + sample_id + reason
-- Run status reflects sample outcomes (SUCCESS/FAILED/PARTIAL)
+## Ausgaben
 
-## Monitoring (conceptual)
-In production, we would monitor:
-- Number of runs processed per hour/day
-- Percentage of runs in FAILED/PARTIAL
-- Error rate per error type (e.g., corrupted FASTQ, missing files)
-- Processing duration per run/sample (latency)
-- Throughput: samples processed per minute
+### Run-Übersicht (erforderlich)
 
-Error escalation approach:
-- Alert when FAILED/PARTIAL rate exceeds a threshold
-- Alert when a run stays in a non-terminal state too long
-- Notify operators via Email/Slack/PagerDuty
-- Optional automatic retry for transient IO errors
+Die Datei `output/status_overview.json` enthält eine Übersicht pro Run mit:
 
-Suggested tools:
-- Metrics: Prometheus + Grafana dashboards/alerts
-- Logs: ELK/EFK stack (Elasticsearch/OpenSearch + Logstash/Fluentd + Kibana)
-- Tracing (optional): OpenTelemetry
+* `run_id`
+* `num_samples`
+* `run_status` (SUCCESS / FAILED / PARTIAL)
+* `failed_samples`
 
+Diese Datei eignet sich für ein schnelles Monitoring oder die Weiterverarbeitung
+in nachgelagerten Systemen.
 
+### Detaillierter Bericht (Nachvollziehbarkeit)
+
+Die Datei `output/status_detailed.json` enthält detaillierte Informationen
+auf Sample-Ebene:
+
+* Sample-ID
+* Verarbeitungsstatus
+* berechnete Metriken bei erfolgreicher Verarbeitung
+* Fehlermeldung bei fehlgeschlagenen Samples
+
+---
+
+## Fehlerbehandlungsstrategie
+
+* Jedes FASTQ-Sample wird unabhängig verarbeitet
+* Beschädigte oder unvollständige FASTQ-Dateien führen zu einem FAILED-Sample
+* Fehler werden mit Run-ID und Sample-ID geloggt
+* Der Run-Status wird wie folgt bestimmt:
+
+  * **SUCCESS**: alle Samples erfolgreich verarbeitet
+  * **FAILED**: alle Samples fehlgeschlagen
+  * **PARTIAL**: Mischung aus erfolgreichen und fehlgeschlagenen Samples
+
+Dieser Ansatz stellt sicher, dass Probleme transparent sichtbar sind
+und nutzbare Ergebnisse nicht verloren gehen.
+
+---
+
+## Monitoring und Produktionsaspekte (konzeptionell)
+
+In einer produktiven Umgebung könnten unter anderem folgende Metriken
+überwacht werden:
+
+* Anzahl verarbeiteter Runs und Samples
+* Anteil FAILED und PARTIAL Runs
+* Häufigkeit bestimmter Fehlertypen (z. B. beschädigte FASTQ-Dateien)
+* Verarbeitungsdauer pro Run und pro Sample
+
+Mögliche Alarmierungsstrategien:
+
+* Alarm bei Überschreiten definierter Fehlerraten
+* Alarm, wenn Runs ungewöhnlich lange in Bearbeitung bleiben
+
+Geeignete Werkzeuge:
+
+* **Prometheus + Grafana** für Metriken und Dashboards
+* **ELK / EFK Stack** für zentrales Logging
+* Benachrichtigungen über E-Mail, Slack oder PagerDuty
+
+---
+
+## Mögliche Erweiterungen
+
+* Ergänzung von Unit-Tests für FASTQ-Verarbeitung und Statuslogik
+* Parallele Verarbeitung großer Runs
+* Optionale CSV-Ausgabe zusätzlich zu JSON
+* Integritätsprüfungen (z. B. Checksummen)
+* Bereitstellung der Pipeline über Docker oder Conda
 
