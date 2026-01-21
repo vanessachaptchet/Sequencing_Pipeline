@@ -1,0 +1,18 @@
+# Data files
+input/
+input.tar.gz
+
+# PDFs not part of source code
+Task-Junior.pdf
+Questionnaire.pdf
+
+# Windows metadata
+*.Zone.Identifier
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+.venv/
+env/
