@@ -16,3 +16,7 @@ __pycache__/
 # Virtual environments
 .venv/
 env/
+
+##output and logs
+output/
+logs/
