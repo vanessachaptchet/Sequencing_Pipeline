@@ -1,3 +1,13 @@
+"""
+This module processes individual FASTQ samples.
+
+Each sample is handled independently:
+- SUCCESS: metrics are computed correctly
+- FAILED: an error occurred (e.g. corrupted FASTQ)
+
+Errors on sample level do not stop the entire run.
+
+"""
 import logging
 from processor.fastq_utils import compute_fastq_metrics
 

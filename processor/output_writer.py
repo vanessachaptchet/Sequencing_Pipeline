@@ -1,11 +1,29 @@
+"""
+This module aggregates sample-level results into run-level reports
+and writes structured JSON output files.
+
+Outputs produced by the pipeline:
+- status_overview.json  (one entry per run)
+- status_detailed.json  (full sample-level details per run)
+"""
+
 import json
 from processor.run_scanner import find_fastq_files
 from processor.sample_processor import process_sample
 
-def write_json(data, output_path):
+def write_json(data, output_path):              # Write a Python object as formatted JSON to a file
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
+"""
+Determine the final run status based on sample results.
+
+    Rules:
+    - SUCCESS: all samples succeeded
+    - FAILED: all samples failed OR there are zero samples
+    - PARTIAL: Mixture of FAILED and SUCCESS Samples
+    
+    """
 def evaluate_run_status(sample_results):
     total = len(sample_results)
     failed = 0
@@ -21,6 +39,20 @@ def evaluate_run_status(sample_results):
         return "FAILED"
     return "PARTIAL"
 
+
+"""
+  Process all runs and build both detailed and overview reports.
+
+    Parameters:
+    run_dirs : list[Path]
+        List of run directories found in the input folder.
+
+    Returns:
+    detailed : list[dict]
+        Per-run detailed results including all sample results.
+    overview : list[dict]
+        Per-run summary with number of samples, run status, and failed count.
+    """
 def build_detailed_and_overview(run_dirs):
     detailed = []
     overview = []

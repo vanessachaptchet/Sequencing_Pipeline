@@ -1,3 +1,15 @@
+
+"""
+Entry point of the sequencing run processing pipeline.
+
+1) Reads CLI arguments (--input, --outdir, --log)
+2) Sets up logging (console + log file)
+3) Scans the input folder for run directories
+4) Processes FASTQ samples per run (metrics + error handling)
+5) Writes JSON outputs:
+   - status_overview.json
+   - status_detailed.json
+"""
 import argparse
 import logging
 from pathlib import Path

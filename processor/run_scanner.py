@@ -1,3 +1,12 @@
+"""
+This module is responsible for discovering sequencing runs and FASTQ files
+inside the input directory.
+
+Main responsibilities:
+- validate the input folder
+- identify run directories (one folder per run)
+- find FASTQ files inside each run (recursive search)
+"""
 from pathlib import Path
 
 def validate_input_dir(input_dir):

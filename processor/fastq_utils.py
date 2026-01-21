@@ -1,15 +1,44 @@
-import gzip
+"""
+This module contains helper functions to read FASTQ files
+(plain text or gzipped) and compute basic sequencing metrics.
 
-def open_text(path):
+Implemented metrics:
+- number of reads
+- average read length
+"""
+
+import gzip
+from pathlib import Path
+
+
+def open_text(path: Path):
+    """
+    Open a FASTQ file as text.
+
+    Supports:
+    - .fastq / .fq (plain text)
+    - .fastq.gz / .fq.gz (gzipped)
+
+    Returns a file handle that can be used in a for-loop.
+    """
     name = str(path).lower()
     if name.endswith(".gz"):
         return gzip.open(path, "rt", encoding="utf-8")
     return open(path, "r", encoding="utf-8")
 
-def compute_fastq_metrics(fastq_path):
+
+def compute_fastq_metrics(fastq_path: Path) -> dict:
     """
-    FASTQ = 4 lines per read.
-    We count reads and compute average read length from sequence lines.
+    Compute basic metrics for a FASTQ file.
+
+    FASTQ format:
+    Each read consists of 4 lines:
+      1) header
+      2) sequence
+      3) plus line
+      4) quality
+
+    We count reads and compute average read length using the sequence lines.
     """
     num_reads = 0
     total_len = 0
@@ -21,16 +50,17 @@ def compute_fastq_metrics(fastq_path):
             line = line.strip("\n")
             mod = line_index % 4
 
-            # sequence line is the 2nd line of each record (mod == 1)
+            # Sequence line = 2nd line of the 4-line FASTQ record
             if mod == 1:
                 total_len += len(line)
 
-            # quality line is the 4th line (mod == 3) => we finished 1 record
+            # Quality line = 4th line => completed one read
             if mod == 3:
                 num_reads += 1
 
             line_index += 1
 
+        # If file ends in the middle of a record, it's an invalid FASTQ
         if line_index % 4 != 0:
             raise ValueError("Invalid FASTQ: incomplete record (file ended mid-read)")
 
