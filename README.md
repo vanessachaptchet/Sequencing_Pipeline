@@ -1,4 +1,4 @@
----
+
 # Sequencing Run Processing Pipeline (Prototype)
 
 ## Kontext und Ziel
