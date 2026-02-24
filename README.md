@@ -1,11 +1,4 @@
-Parfait 👍
-Voici **TOUT le contenu du README**, **clé en main**.
-👉 Tu **copies–colles exactement** ceci dans `README.md`.
-👉 **Tu ne modifies rien** si tu ne veux pas.
-
 ---
-
-````markdown
 # Sequencing Run Processing Pipeline (Prototype)
 
 ## Kontext und Ziel
